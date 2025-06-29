@@ -28,11 +28,18 @@ fun main() {
                     .map { post ->
                         async {
                             val author = getAuthor(client, post.authorId)
+                            val comments = getPostComments(client, post.id)
+                                .map { comment ->
+                                    async {
+                                        comment.author = getAuthor(client, comment.authorId)
+                                        comment
+                                    }
+                                }.awaitAll()
+
                             PostWithComments(
                                 post,
                                 author,
-                                getPostComments(client, post.id)
-                                    .also { it.forEach { it.author = author } }
+                                comments
                             )
                         }
                     }.awaitAll()
